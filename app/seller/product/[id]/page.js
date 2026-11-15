@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { useUser, authFetch } from '@/lib/useUser';
 import { GROUP_LABELS } from '@/lib/price';
 import OptionsEditor from '@/components/OptionsEditor';
+import FilePicker from '@/components/FilePicker';
 
 // Every option group, in display order (taken from lib/price.js so the list lives in one place).
 const GROUPS = Object.keys(GROUP_LABELS);
@@ -41,7 +42,9 @@ export default function ProductFormPage() {
   const [options, setOptions] = useState([]); // all option rows, every group
   const [originalOptionIds, setOriginalOptionIds] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState(''); // save progress / errors (shown next to Save)
+  const [galleryStatus, setGalleryStatus] = useState(''); // shown under the gallery uploader
+  const [ai, setAi] = useState({ state: 'idle', message: '', preview: null }); // AI helper box
 
   // Load categories, and the existing product when editing.
   useEffect(() => {
@@ -93,20 +96,23 @@ export default function ProductFormPage() {
     return uploaded?.url;
   }
 
-  async function handlePhotos(e) {
-    setStatus('Uploading photos...');
-    for (const file of e.target.files) await uploadPhoto(file);
-    setStatus('');
+  // Gallery uploads: the message is shown under the gallery box (not at the bottom of the form).
+  async function handlePhotos(files) {
+    setGalleryStatus(`Uploading ${files.length} photo${files.length > 1 ? 's' : ''}...`);
+    for (const file of files) await uploadPhoto(file);
+    setGalleryStatus(`${files.length} photo${files.length > 1 ? 's' : ''} added. Choose which colour each one shows below.`);
   }
 
   // AI FEATURE: send the photo to our /api/ai-describe route, which asks
   // Google Gemini to suggest a title + description. The seller can still edit them.
-  async function handleAiPhoto(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    setStatus('AI is looking at your photo...');
-    const blob = await uploadPhoto(file);
-    if (!blob) return setStatus('');
+  // `ai` drives the status shown INSIDE the AI box: idle -> working -> done / error.
+  async function handleAiPhoto(files) {
+    const file = files[0];
+    setAi({ state: 'working', message: 'Uploading your photo...', preview: URL.createObjectURL(file) });
+    const blob = await uploadPhoto(file); // the photo is also added to the gallery
+    if (!blob) return setAi((a) => ({ ...a, state: 'error', message: 'The photo could not be uploaded. Please try again.' }));
+
+    setAi((a) => ({ ...a, message: 'AI is reading your photo...' }));
     const base64 = await new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result.split(',')[1]); // drop "data:image/jpeg;base64,"
@@ -115,9 +121,9 @@ export default function ProductFormPage() {
     try {
       const result = await authFetch('/api/ai-describe', { imageBase64: base64 });
       setProduct((p) => ({ ...p, title: result.title, description: result.description }));
-      setStatus('AI filled in the title and description - please check them.');
+      setAi((a) => ({ ...a, state: 'done', message: 'Done. The title and description below have been filled in. Check and edit them before saving.' }));
     } catch (err) {
-      setStatus('AI error: ' + err.message);
+      setAi((a) => ({ ...a, state: 'error', message: 'AI could not describe this photo: ' + err.message }));
     }
   }
 
@@ -188,10 +194,25 @@ export default function ProductFormPage() {
     <form onSubmit={handleSave} className="max-w-2xl mx-auto space-y-4 pb-10">
       <h1 className="page-title">{isNew ? 'Add product' : 'Edit product'}</h1>
 
+      {/* AI helper: its own photo picker, a preview and a status line, all in this box. */}
       <div className="card space-y-3 bg-sand">
-        <p className="font-semibold">✨ AI helper</p>
-        <p className="text-sm">Upload a product photo and AI will suggest a title and description.</p>
-        <input type="file" accept="image/*" onChange={handleAiPhoto} className="text-sm" />
+        <div>
+          <p className="font-semibold">AI listing helper</p>
+          <p className="text-sm text-muted">Choose a photo of the product. AI will suggest a title and description, and the photo is added to the gallery.</p>
+        </div>
+        <FilePicker
+          label="Choose a product photo for AI"
+          hint="Click to browse, or drag a photo here (JPG or PNG)"
+          onFiles={handleAiPhoto}
+          disabled={ai.state === 'working'}
+        />
+        {ai.state !== 'idle' && (
+          <div className="flex items-center gap-3 rounded-xl bg-white border border-line p-3" role="status">
+            {ai.preview && <img src={ai.preview} alt="Photo sent to AI" className="w-16 h-12 object-cover rounded-lg shrink-0" />}
+            {ai.state === 'working' && <span className="w-5 h-5 shrink-0 rounded-full border-2 border-line border-t-ink animate-spin" aria-hidden="true" />}
+            <p className={`text-sm ${ai.state === 'error' ? 'text-sale' : ai.state === 'done' ? 'text-green-800' : ''}`}>{ai.message}</p>
+          </div>
+        )}
       </div>
 
       <div className="card space-y-3">
@@ -240,7 +261,13 @@ export default function ProductFormPage() {
             </div>
           ))}
         </div>
-        <input type="file" accept="image/*" multiple onChange={handlePhotos} className="text-sm" />
+        <FilePicker
+          label="Add gallery photos"
+          hint="Click to browse, or drag photos here. You can choose several at once."
+          multiple
+          onFiles={handlePhotos}
+        />
+        {galleryStatus && <p className="text-sm text-muted" role="status">{galleryStatus}</p>}
       </div>
 
       <h2 className="font-display text-xl font-semibold">Options &amp; prices</h2>
