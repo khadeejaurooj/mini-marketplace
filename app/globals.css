@@ -1,26 +1,65 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ---------------------------------------------------------------
+   DESIGN TOKENS - one place for the shop's colours and fonts.
+   Tailwind turns each --color-x into classes like bg-x / text-x,
+   e.g. --color-ink -> "text-ink", "bg-ink".
+   --------------------------------------------------------------- */
+@theme {
+  --color-ink: #23201c;      /* main text + dark buttons */
+  --color-muted: #6f675d;    /* secondary text */
+  --color-cream: #faf7f2;    /* page background */
+  --color-sand: #f1ebe2;     /* soft panels */
+  --color-line: #e5ddd1;     /* borders */
+  --color-walnut: #7a5236;   /* accent (links, highlights) */
+  --color-sale: #b3261e;     /* discount badge */
+  --font-sans: var(--font-inter), Arial, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  overflow-x: hidden; /* never allow sideways scrolling on phones */
+}
+
+/* Shared building blocks reused on many pages, so the JSX stays short.
+   @layer components lets Tailwind utilities (e.g. w-24) override them. */
+@layer components {
+  /* Buttons and inputs are at least 44px tall = easy to tap on a phone. */
+  .btn {
+    min-height: 44px;
+    padding: 0 20px;
+    border-radius: 999px;
+    background: var(--color-ink);
+    color: white;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.05s;
+  }
+  .btn:hover { background: #3a352f; }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-light { background: white; color: var(--color-ink); border: 1px solid var(--color-line); }
+  .btn-light:hover { background: var(--color-sand); }
+
+  .input {
+    min-height: 44px;
+    width: 100%;
+    padding: 0 14px;
+    border: 1px solid var(--color-line);
+    border-radius: 10px;
+    background: white;
+  }
+  .input:focus { outline: 2px solid var(--color-walnut); outline-offset: -1px; }
+  textarea.input { padding: 10px 14px; }
+
+  .card { background: white; border: 1px solid var(--color-line); border-radius: 16px; padding: 18px; }
+  .label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .page-title { font-family: var(--font-display); font-size: 1.9rem; line-height: 1.15; font-weight: 600; }
 }
