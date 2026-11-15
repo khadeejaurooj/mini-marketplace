@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><defs><linearGradient id="fab" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#606264"/><stop offset="1" stop-color="#3d3f42"/></linearGradient>
+<linearGradient id="base" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d3f42"/><stop offset="1" stop-color="#2e2f32"/></linearGradient></defs><rect width="800" height="600" fill="#f1ece4"/><rect y="430" width="800" height="170" fill="#e4dbcf"/><ellipse cx="420" cy="470" rx="320" ry="26" fill="#000" opacity="0.10"/>
+<polygon points="150,110 330,70 330,300 150,330" fill="url(#fab)" stroke="#2e2f32" stroke-width="2"/>
+<polygon points="150,300 330,270 700,330 520,370" fill="#f8f6f2" stroke="#e2ddd4" stroke-width="2"/>
+<polygon points="190,262 300,245 330,268 220,286" fill="#fff" stroke="#e2ddd4" stroke-width="2"/>
+<polygon points="150,330 520,370 520,450 150,410" fill="url(#base)"/>
+<polygon points="520,370 700,330 700,405 520,450" fill="#252628"/>
+<rect x="160" y="408" width="16" height="18" fill="#3b342c"/><rect x="505" y="448" width="16" height="18" fill="#3b342c"/><rect x="684" y="403" width="16" height="16" fill="#3b342c"/>
+<rect x="24" y="530" width="301" height="46" rx="23" fill="#fff" opacity="0.92"/><circle cx="50" cy="553" r="11" fill="#3d3f42" stroke="#d6d0c6"/><text x="70" y="559" font-family="Arial, sans-serif" font-size="16" fill="#3b342c">Charcoal Coniston · side view</text></svg>

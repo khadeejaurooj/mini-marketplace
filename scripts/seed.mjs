@@ -7,6 +7,7 @@
 // Safe to re-run: existing users are reused and the bed is re-created.
 // =====================================================================
 import { createClient } from '@supabase/supabase-js';
+import { COLOURS, COLOUR_VIEWS, slug } from './colours.mjs';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -43,7 +44,41 @@ async function ensureUser({ email, full_name, role }) {
   return id;
 }
 
+// ---------------------------------------------------------------------
+// Gallery: link every colour to its own set of images.
+//   - colour option.image_url        = that colour's main (front) picture
+//   - product_images with colour_option_id = that colour's other views
+//   - product_images with NULL colour = shown for every colour (size chart)
+// Images are made by scripts/make-placeholder-images.mjs.
+// ---------------------------------------------------------------------
+async function setGallery(productId) {
+  const { data: colourOptions } = await supabase
+    .from('product_options').select('id, name').eq('product_id', productId).eq('group_name', 'colour');
+
+  const images = [];
+  for (const colour of colourOptions) {
+    const folder = `/images/colours/${slug(colour.name)}`;
+    await supabase.from('product_options').update({ image_url: `${folder}/front.svg` }).eq('id', colour.id);
+    COLOUR_VIEWS.forEach((view, i) =>
+      images.push({ product_id: productId, url: `${folder}/${view}.svg`, position: i + 1, colour_option_id: colour.id })
+    );
+  }
+  images.push({ product_id: productId, url: '/images/sizes.svg', position: 99, colour_option_id: null });
+
+  await supabase.from('product_images').delete().eq('product_id', productId);
+  const { error } = await supabase.from('product_images').insert(images);
+  if (error) throw error;
+  console.log(`Gallery set: ${colourOptions.length} colours x ${COLOUR_VIEWS.length + 1} images + size chart.`);
+}
+
 async function main() {
+  // "npm run seed -- --images-only" refreshes the gallery of the existing bed
+  // without re-creating it (keeps its id, orders and links).
+  if (process.argv.includes('--images-only')) {
+    const { data: bed } = await supabase.from('products').select('id').like('title', 'Prague Divan Bed%').single();
+    return setGallery(bed.id);
+  }
+
   const ids = {};
   for (const account of ACCOUNTS) ids[account.role] = await ensureUser(account);
 
@@ -65,22 +100,8 @@ async function main() {
     .single();
   if (error) throw error;
 
-  // 5 gallery detail images (our own SVGs, made by scripts/make-placeholder-images.mjs).
-  const images = [1, 2, 3, 4, 5].map((n) => ({ product_id: product.id, url: `/images/detail-${n}.svg`, position: n }));
-  await supabase.from('product_images').insert(images);
-
   // All option groups. price_extra is added to the base price.
-  // Colour names taken from the reference page's swatch list.
-  const colours = [
-    ['Cream Naples', '#e6dcc6'],
-    ['Charcoal Coniston', '#3d3f42'],
-    ['Silver Plush Velvet', '#bfc1c3'],
-    ['Seal Grey Naples', '#8a867e'],
-    ['Emerald Coniston', '#1f5a45'],
-    ['Pink Plush Velvet', '#e2b4b6'],
-    ['Blue Plush Velvet', '#2e4868'],
-    ['Black Naples', '#1f1f1f'],
-  ];
+  // Colours (names from the reference page) live in scripts/colours.mjs.
   const groups = {
     size: [['Small Single 2FT6', 90], ['Single 3FT', 95], ['Small Double 4FT', 100], ['Double 4FT6', 110], ['King 5FT', 125], ['Super King 6FT', 150]],
     storage: [['No Storage', 0], ['2 Drawers Left Side', 50], ['2 Drawers Right Side', 45], ['2 Drawers Foot End', 155], ['4 Drawers', 210]],
@@ -89,11 +110,8 @@ async function main() {
     addon: [['Professional Assembly', 39.99]],
   };
 
-  // Each colour links to ITS OWN image (image_url), shown when the swatch is clicked.
-  const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  const options = colours.map(([name, hex], i) => ({
-    product_id: product.id, group_name: 'colour', name, price_extra: 0, swatch_hex: hex,
-    image_url: `/images/colours/${slug(name)}.svg`, position: i,
+  const options = COLOURS.map(([name, hex], i) => ({
+    product_id: product.id, group_name: 'colour', name, price_extra: 0, swatch_hex: hex, position: i,
   }));
   for (const [group_name, rows] of Object.entries(groups)) {
     rows.forEach(([name, price_extra], i) =>
@@ -103,6 +121,8 @@ async function main() {
   const { error: optError } = await supabase.from('product_options').insert(options);
   if (optError) throw optError;
 
+  // Images need the colour option ids, so they are added after the options.
+  await setGallery(product.id);
   console.log(`Prague Divan Bed created with ${options.length} options. Done!`);
 }
 

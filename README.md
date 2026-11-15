@@ -8,7 +8,7 @@ A small slice of a multi-vendor marketplace, built for the MVP skills test.
 3. The seller moves the order through New → Confirmed → Shipped → Delivered.
 4. An admin approves or hides sellers and listings.
 
-- **Live link:** _add Vercel URL here_
+- **Live link:** https://mini-marketplace-six-eta.vercel.app
 - **Stack:** Next.js 15 (React, JavaScript) + Tailwind · Supabase (Postgres, Auth, Storage) · Google Gemini (AI) · Vercel
 
 ## Test accounts
@@ -29,7 +29,7 @@ These are sample accounts only. No real customer data is used.
    npm install
    ```
 
-2. Create a free Supabase project. In the **SQL Editor**, run the whole of `supabase/schema.sql`. Then go to **Authentication → Sign In / Providers → Email** and turn off "Confirm email".
+2. Create a free Supabase project. In the **SQL Editor**, run the whole of `supabase/schema.sql` (it already includes the changes in `supabase/migrations/`). Then go to **Authentication → Sign In / Providers → Email** and turn off "Confirm email".
 3. Copy `.env.example` to `.env.local` and fill in:
    - **Supabase URL and keys:** Project Settings → API Keys
    - **Gemini key:** aistudio.google.com → Get API key (free)
@@ -81,18 +81,18 @@ It opens full screen with its own icon and uses the same backend as the website.
     - A 5-image gallery (thumbnails, swipe, tap to enlarge) and a sticky Add to Basket bar
   - Basket (each option combination is its own line, all options shown) and a one-page fake checkout
 - Prices recalculated on the server at checkout, so a price changed in the browser is ignored
-- Orders: the buyer's order list, and the seller's incoming orders with status changes
+- Orders: the buyer's order list (with a "status changed" message), and the seller's incoming orders with status changes
 - Admin: approve or hide sellers, and show or hide listings
 - AI: "describe my product photo" fills in the title and description (Gemini)
 - Responsive from 360px with 44px tap targets; installable PWA
-- Price checked on 6 combinations (see `docs/IMPLEMENTATION_NOTES.md` section 9)
+- Price checked on several option combinations against hand calculations
 
 ## What's not done or simplified (honest status)
 
 - The basket is stored in the browser (localStorage), not the database.
 - Colour images are our own drawings (one per colour, linked in the database). There are no real photos, but sellers can upload one per colour. There are no real product photos (by design: no Sonno images).
 - Colour and size filters run in the browser. Search, price and category filters run in the database.
-- Push notifications (bonus), password reset, reviews, stock levels, and more than one category are not built.
+- Phone push notifications are not built. Instead, the buyer's "My orders" page shows a message when an order's status changed since the last visit. Password reset, reviews, stock levels, and more than one category are not built either.
 - Real payments, emails, delivery tracking and analytics are skipped, as the brief allows.
 - **Price note:** the brief lists £269.99 as the small-single price *and* Small Single as +£90. We followed the size table, so the default combination is £359.99. It can be changed in the seller form.
 
@@ -107,5 +107,5 @@ It opens full screen with its own icon and uses the same backend as the website.
 
 ## Docs
 
-- `docs/IMPLEMENTATION_NOTES.md`: how everything works, the decisions made, and the test results
-- `docs/ASSESSMENT_QA.md`: answers to the assessment questions, AI notes, and likely interview changes
+- `downloads/SUBMISSION.md`: the assessment submission (plan, features, testing, AI notes, honest status)
+- `downloads/INTERNAL_LEARNING_GUIDE.md`: a detailed guide to the code: architecture, a folder and file guide, and how each feature works

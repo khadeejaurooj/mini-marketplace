@@ -9,7 +9,8 @@ import { useUser, authFetch } from '@/lib/useUser';
 import { GROUP_LABELS } from '@/lib/price';
 import OptionsEditor from '@/components/OptionsEditor';
 
-const GROUPS = ['colour', 'size', 'storage', 'headboard', 'base', 'addon'];
+// Every option group, in display order (taken from lib/price.js so the list lives in one place).
+const GROUPS = Object.keys(GROUP_LABELS);
 const EMPTY = { title: '', description: '', base_price: '', compare_at_price: '', category_id: 2, status: 'active' };
 
 // Shrink a photo in the browser to max 1024px wide JPEG. Keeps uploads small
@@ -142,8 +143,11 @@ export default function ProductFormPage() {
     const productId = saved.id;
 
     // 2. Images: simplest approach - delete the old rows, insert the current list in order.
+    //    colour_option_id links a photo to one colour (empty = every colour).
     await supabase.from('product_images').delete().eq('product_id', productId);
-    await supabase.from('product_images').insert(images.map((img, i) => ({ product_id: productId, url: img.url, position: i })));
+    await supabase.from('product_images').insert(
+      images.map((img, i) => ({ product_id: productId, url: img.url, position: i, colour_option_id: img.colour_option_id || null }))
+    );
 
     // 3. Options: delete removed rows, update existing ones, insert new ones.
     //    (We keep existing ids so baskets that use them stay valid.)
@@ -217,12 +221,22 @@ export default function ProductFormPage() {
       </div>
 
       <div className="card space-y-3">
-        <p className="font-semibold">Photos ({images.length}) – at least 5 recommended</p>
-        <div className="flex flex-wrap gap-2">
+        <p className="font-semibold">Gallery photos ({images.length})</p>
+        <p className="text-sm text-muted">
+          Choose which colour each photo shows. Buyers only see the photos of the colour they pick, plus photos set to
+          &quot;All colours&quot;. Each colour&apos;s main photo is set in the Colour section below.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {images.map((img, i) => (
-            <div key={i} className="relative">
-              <img src={img.url} alt="" className="w-20 h-16 object-cover rounded" />
-              <button type="button" className="absolute -top-2 -right-2 bg-white border rounded-full w-7 h-7 text-xs" onClick={() => setImages(images.filter((_, j) => j !== i))}>✕</button>
+            <div key={i} className="flex items-center gap-2 border border-line rounded-xl p-2">
+              <img src={img.url} alt="" className="w-16 h-12 object-cover rounded shrink-0" />
+              {/* Only saved colours have an id, so new colours appear here after saving. */}
+              <select className="input min-w-0" value={img.colour_option_id || ''} aria-label="Photo colour"
+                onChange={(e) => setImages(images.map((x, j) => (j === i ? { ...x, colour_option_id: e.target.value || null } : x)))}>
+                <option value="">All colours</option>
+                {options.filter((o) => o.group_name === 'colour' && o.id).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              <button type="button" className="btn btn-light w-11 px-0 shrink-0" aria-label="Remove photo" onClick={() => setImages(images.filter((_, j) => j !== i))}>✕</button>
             </div>
           ))}
         </div>

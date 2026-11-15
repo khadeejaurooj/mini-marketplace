@@ -3,7 +3,7 @@
 // onStatusChange is only passed on the seller page -> shows a dropdown.
 import { formatPrice, GROUP_LABELS } from '@/lib/price';
 
-export const STATUSES = ['New', 'Confirmed', 'Shipped', 'Delivered'];
+const STATUSES = ['New', 'Confirmed', 'Shipped', 'Delivered'];
 
 const statusColour = {
   New: 'bg-blue-100 text-blue-800',

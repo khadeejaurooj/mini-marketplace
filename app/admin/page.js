@@ -11,6 +11,9 @@ export default function AdminPage() {
   const [sellers, setSellers] = useState([]);
   const [products, setProducts] = useState([]);
 
+  // Load every seller (pending, approved, hidden) and every listing.
+  // Normal users would get only public rows back; is_admin() in the RLS
+  // rules is what lets the admin see the hidden and pending ones too.
   async function load() {
     const { data: s } = await supabase.from('profiles').select('*').eq('role', 'seller').order('created_at');
     const { data: p } = await supabase.from('products').select('*, seller:profiles(full_name)').order('created_at');
@@ -22,11 +25,14 @@ export default function AdminPage() {
     if (profile?.role === 'admin') load();
   }, [profile]);
 
+  // Approve / hide a seller. The shop only lists products whose seller is
+  // 'approved', so hiding a seller hides ALL their products at once.
   async function setSellerStatus(id, status) {
     await supabase.from('profiles').update({ status }).eq('id', id);
     load();
   }
 
+  // Show / hide one listing ('active' = visible in the shop).
   async function setProductStatus(id, status) {
     await supabase.from('products').update({ status }).eq('id', id);
     load();

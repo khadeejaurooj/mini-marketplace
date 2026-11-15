@@ -83,7 +83,8 @@ create table if not exists products (
 );
 
 -- ---------------------------------------------------------------------
--- 4. PRODUCT_IMAGES: the gallery (5+ images per product)
+-- 4. PRODUCT_IMAGES: the gallery (5+ images per product).
+--    colour_option_id is added further down (after product_options).
 -- ---------------------------------------------------------------------
 create table if not exists product_images (
   id         uuid primary key default gen_random_uuid(),
@@ -111,6 +112,13 @@ create table if not exists product_options (
   image_url   text,
   position    int not null default 0
 );
+
+-- Gallery images can belong to ONE colour (shown only when that colour is
+-- selected) or to none (NULL = shown for every colour, e.g. a size chart).
+-- Added here because product_options must exist first.
+-- (Same change as supabase/migrations/002_colour_gallery.sql.)
+alter table product_images
+  add column if not exists colour_option_id uuid references product_options(id) on delete cascade;
 
 -- ---------------------------------------------------------------------
 -- 6. ORDERS + ORDER_ITEMS
@@ -157,6 +165,10 @@ alter table order_items     enable row level security;
 drop policy if exists "read own profile or admin" on profiles;
 create policy "read own profile or admin" on profiles
   for select using (id = auth.uid() or is_admin());
+-- Shoppers can see the name of APPROVED sellers ("Sold by ..." on the product page).
+drop policy if exists "approved sellers are public" on profiles;
+create policy "approved sellers are public" on profiles
+  for select using (role = 'seller' and status = 'approved');
 drop policy if exists "admin updates profiles" on profiles;
 create policy "admin updates profiles" on profiles
   for update using (is_admin());

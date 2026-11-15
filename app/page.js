@@ -60,7 +60,7 @@ export default function ShopPage() {
           <p className="text-muted mt-3">Pick a fabric, choose your options and see the price update instantly.</p>
         </div>
         {/* Decorative illustration, hidden on phones to save space */}
-        <img src="/images/detail-5.svg" alt="" className="hidden md:block w-full h-full max-h-64 object-cover" />
+        <img src="/images/fabrics.svg" alt="" className="hidden md:block w-full h-full max-h-64 object-cover" />
       </section>
 
       {/* Search + filters */}

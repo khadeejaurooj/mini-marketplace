@@ -8,7 +8,7 @@
 // =====================================================================
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, getUserFromRequest } from '@/lib/supabaseServer';
-import { calculatePrice, titleWithColour, GROUP_LABELS, REQUIRED_GROUPS, round2 } from '@/lib/price';
+import { calculatePrice, buildOptionLabels, titleWithColour, GROUP_LABELS, REQUIRED_GROUPS, round2 } from '@/lib/price';
 
 const fail = (message, status = 400) => NextResponse.json({ error: message }, { status });
 
@@ -37,15 +37,13 @@ export async function POST(request) {
     if (chosen.length !== item.optionIds.length) return fail('Invalid option selected.');
 
     // ...and each required group needs exactly one choice.
-    const labels = {};
     for (const group of REQUIRED_GROUPS) {
       const inGroup = chosen.filter((o) => o.group_name === group);
       const groupExists = options.some((o) => o.group_name === group);
       if (groupExists && inGroup.length !== 1) return fail(`Please choose one ${GROUP_LABELS[group]}.`);
-      if (inGroup[0]) labels[GROUP_LABELS[group]] = inGroup[0].name;
     }
-    const addonNames = chosen.filter((o) => o.group_name === 'addon').map((o) => o.name);
-    labels[GROUP_LABELS.addon] = addonNames.length ? addonNames.join(', ') : 'None';
+    // Readable labels saved with the order (same helper as the basket uses).
+    const labels = buildOptionLabels(options, item.optionIds);
 
     const quantity = Math.max(1, parseInt(item.quantity, 10) || 1);
     const unitPrice = calculatePrice(product, options, item.optionIds);

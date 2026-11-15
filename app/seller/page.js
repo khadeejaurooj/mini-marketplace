@@ -12,6 +12,8 @@ export default function SellerPage() {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
 
+  // My products (including hidden ones) + orders placed for my products.
+  // order_items(*) = also fetch each order's lines in the same request.
   async function load() {
     const { data: p } = await supabase.from('products').select('*').eq('seller_id', user.id).order('created_at');
     const { data: o } = await supabase

@@ -34,6 +34,12 @@ export default function LoginPage() {
     setBusy(false);
     if (result.error) return setError(result.error.message);
 
+    // If Supabase is set to "confirm email", sign-up gives no session yet.
+    // Tell the user instead of pretending they are logged in.
+    if (!result.data.session) {
+      return setError('Account created. Please confirm your email, then log in.');
+    }
+
     // Send each role to its main page.
     const { data: profile } = await supabase
       .from('profiles').select('role').eq('id', result.data.user.id).single();
