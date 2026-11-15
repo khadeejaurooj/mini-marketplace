@@ -104,8 +104,3 @@ It opens full screen with its own icon and uses the same backend as the website.
 - Order-status notifications
 - Automated tests for pricing and checkout
 - Stock per variant
-
-## Docs
-
-- `downloads/SUBMISSION.md`: the assessment submission (plan, features, testing, AI notes, honest status)
-- `downloads/INTERNAL_LEARNING_GUIDE.md`: a detailed guide to the code: architecture, a folder and file guide, and how each feature works
